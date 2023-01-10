@@ -60,6 +60,19 @@ pub struct SearchUsersReq {
     email: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UpdateUserReq {
+    id: String,
+    name: Option<String>,
+    email: Option<String>,
+    password: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct DeleteUserReq {
+    pub id: String,
+}
+
 #[derive(Clone)]
 pub struct UserService {
     base: BaseService<User>,
@@ -74,13 +87,14 @@ impl UserService {
 
     pub async fn create_user(&self, req: CreateUserReq) -> Result<User, Error> {
         let user= User::new(req.name, req.email, req.password);
+        
         match self.base.insert(user.copy()).await {
             Ok(_) => Ok(user.copy()),
             Err(e) => Err(e),
         }
     }
 
-    pub async fn search_users(&self, req: SearchUsersReq, options: Option<FindOptions>) -> Vec<User> {
+    pub async fn search_users(&self, req: SearchUsersReq, options: Option<FindOptions>) -> Result<Vec<User>, Error> {
         let mut filter = Document::new();
         if let Some(name) = req.name {
             filter.insert("name", name);
@@ -88,6 +102,53 @@ impl UserService {
         if let Some(email) = req.email {
             filter.insert("email", email);
         }
-        self.base.find(filter, options).await
+
+        match self.base.find(filter, options).await {
+            Ok(users) => Ok(users),
+            Err(e) => Err(e),
+        }
+    }
+
+    pub async fn update_user(&self, req: UpdateUserReq) -> Result<User, Error> {
+        let mut filter = Document::new();
+        filter.insert("_id", req.id.clone());
+
+        let mut update = Document::new();
+        if let Some(name) = req.name {
+            update.insert("name", name);
+        }
+        if let Some(email) = req.email {
+            update.insert("email", email);
+        }
+        if let Some(password) = req.password {
+            update.insert("password", password);
+        }
+
+        match self.base.update(filter, update).await {
+            Ok(result) => {
+                let mut filter = Document::new();
+                filter.insert("_id", Some(result.upserted_id.unwrap()));
+
+                match self.base.find(filter, None).await {
+                    Ok(users) => Ok(users[0].copy()),
+                    Err(e) => Err(e),
+                }
+            },
+            Err(e) => Err(e),
+        }
+    }
+
+    pub async fn delete_user(&self, req: DeleteUserReq) -> Result<User, Error> {
+        let mut filter = Document::new();
+        filter.insert("_id", req.id.clone());
+        let user = match self.base.find(filter.clone(), None).await {
+            Ok(users) => users[0].copy(),
+            Err(e) => return Err(e),
+        };
+
+        match self.base.delete(filter).await {
+            Ok(_) => Ok(user.copy()),
+            Err(e) => Err(e),
+        }
     }
 }

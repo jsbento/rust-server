@@ -34,9 +34,7 @@ impl<T> BaseService<T> {
         self.collection.insert_one(document, None).await
     }
 
-    pub async fn update(&self, filter: Document, update: T) -> Result<UpdateResult, Error>
-        where T: Into<UpdateModifications>
-    {
+    pub async fn update(&self, filter: Document, update: Document) -> Result<UpdateResult, Error> {
         self.collection.update_one(filter, update, None).await
     }
 
@@ -44,27 +42,18 @@ impl<T> BaseService<T> {
         self.collection.delete_one(filter, None).await
     }
 
-    pub async fn find(&self, filter: Document, opts: Option<FindOptions>) -> Vec<T>
+    pub async fn find(&self, filter: Document, opts: Option<FindOptions>) -> Result<Vec<T>, Error>
         where T: serde::de::DeserializeOwned + Sync + Send + Unpin
     {
         let cursor = self.collection.find(filter, opts).await.unwrap();
-        match cursor.collect().await {
-            Ok(results) => results,
-            Err(error) => {
-                println!("Error: {}", error);
-                Vec::new()
-            }
-        }
+        cursor.collect().await
     }
 
-    pub async fn aggregate(&self, pipe: Vec<Document>) -> Vec<Document>
+    pub async fn aggregate(&self, pipe: Vec<Document>) -> Result<Vec<Document>, Error>
         where T: serde::de::DeserializeOwned
     {
         let cursor = self.collection.aggregate(pipe, None).await.unwrap();
-        match cursor.collect().await {
-            Ok(results) => results,
-            Err(_) => Vec::new(),
-        }
+        cursor.collect().await
     }
 }
 
