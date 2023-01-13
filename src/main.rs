@@ -13,6 +13,7 @@ use mongodb::{
     Client,
 };
 use dotenv;
+use serde_json::json;
 
 mod services;
 use services::{
@@ -73,7 +74,10 @@ async fn create_user(services: web::Data<ServiceContainer>, req: web::Json<Creat
     
     match result {
         Ok(user) => HttpResponse::Ok().json(user),
-        Err(error) => HttpResponse::InternalServerError().json(error.labels()),
+        Err(error) => HttpResponse::InternalServerError()
+            .json(json!({
+                "error": error.to_string()
+            })),
     }
 }
 
@@ -83,7 +87,10 @@ async fn get_users(services: web::Data<ServiceContainer>, req: web::Query<Search
 
     match users {
         Ok(users) => HttpResponse::Ok().json(users),
-        Err(error) => HttpResponse::InternalServerError().json(error.to_string()),
+        Err(error) => HttpResponse::InternalServerError()
+            .json(json!({
+                "error": error.to_string()
+            })),
     }
 }
 
@@ -95,7 +102,10 @@ async fn update_user(services: web::Data<ServiceContainer>, req: web::Json<Updat
 
     match result {
         Ok(user) => HttpResponse::Ok().json(user),
-        Err(error) => HttpResponse::InternalServerError().json(error.to_string()),
+        Err(error) => HttpResponse::InternalServerError()
+            .json(json!({
+                "error": error.to_string()
+            })),
     }
 }
 
@@ -109,6 +119,9 @@ async fn delete_user(services: web::Data<ServiceContainer>, req: web::Path<Strin
 
     match result {
         Ok(user) => HttpResponse::Ok().json(user),
-        Err(error) => HttpResponse::InternalServerError().json(error.to_string()),
+        Err(error) => HttpResponse::InternalServerError()
+            .json(json!({
+                "error": error.to_string()
+            })),
     }
 }
