@@ -1,9 +1,11 @@
 use mongodb:: {
-    bson::Document,
+    bson::{
+        Document,
+        doc,
+    },
     Collection,
     error::Error,
     options:: {
-        UpdateModifications,
         FindOptions,
     },
     results::{
@@ -35,7 +37,10 @@ impl<T> BaseService<T> {
     }
 
     pub async fn update(&self, filter: Document, update: Document) -> Result<UpdateResult, Error> {
-        self.collection.update_one(filter, update, None).await
+        let set = doc! {
+            "$set": update,
+        };
+        self.collection.update_one(filter, set, None).await
     }
 
     pub async fn delete(&self, filter: Document) -> Result<DeleteResult, Error> {

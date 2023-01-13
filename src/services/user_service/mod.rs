@@ -1,6 +1,9 @@
 use crate::services::BaseService;
 use mongodb::{
-    bson::Document,
+    bson::{
+        Document,
+        doc,
+    },
     Collection,
     error::Error,
     options::{
@@ -110,9 +113,9 @@ impl UserService {
     }
 
     pub async fn update_user(&self, req: UpdateUserReq) -> Result<User, Error> {
-        let mut filter = Document::new();
-        filter.insert("_id", req.id.clone());
-
+        let filter = doc! {
+            "_id": req.id.clone()
+        };
         let mut update = Document::new();
         if let Some(name) = req.name {
             update.insert("name", name);
@@ -124,12 +127,9 @@ impl UserService {
             update.insert("password", password);
         }
 
-        match self.base.update(filter, update).await {
-            Ok(result) => {
-                let mut filter = Document::new();
-                filter.insert("_id", Some(result.upserted_id.unwrap()));
-
-                match self.base.find(filter, None).await {
+        match self.base.update(filter.clone(), update).await {
+            Ok(_) => {
+                match self.base.find(filter.clone(), None).await {
                     Ok(users) => Ok(users[0].copy()),
                     Err(e) => Err(e),
                 }

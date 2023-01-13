@@ -83,7 +83,7 @@ async fn get_users(services: web::Data<ServiceContainer>, req: web::Query<Search
 
     match users {
         Ok(users) => HttpResponse::Ok().json(users),
-        Err(error) => HttpResponse::InternalServerError().json(error.labels()),
+        Err(error) => HttpResponse::InternalServerError().json(error.to_string()),
     }
 }
 
@@ -95,7 +95,7 @@ async fn update_user(services: web::Data<ServiceContainer>, req: web::Json<Updat
 
     match result {
         Ok(user) => HttpResponse::Ok().json(user),
-        Err(error) => HttpResponse::InternalServerError().json(error.labels()),
+        Err(error) => HttpResponse::InternalServerError().json(error.to_string()),
     }
 }
 
@@ -109,6 +109,6 @@ async fn delete_user(services: web::Data<ServiceContainer>, req: web::Path<Strin
 
     match result {
         Ok(user) => HttpResponse::Ok().json(user),
-        Err(error) => HttpResponse::InternalServerError().json(error.labels()),
+        Err(error) => HttpResponse::InternalServerError().json(error.to_string()),
     }
 }
